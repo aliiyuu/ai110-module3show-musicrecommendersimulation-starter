@@ -58,16 +58,19 @@ class Recommender:
         return f"Score {score:.2f}: " + "; ".join(reasons)
 
     def _score_song(self, user: UserProfile, song: Song) -> Tuple[float, List[str]]:
-        """Return a normalized points-based score in [0, 1] and a list of explanation reasons."""
+        """Return a normalized points-based score in [0, 1] and a list of explanation reasons.
+        
+        WEIGHT SHIFT EXPERIMENT: Genre halved (+2.0→+1.0), Energy doubled (×2.0→×4.0), max_points=7.0.
+        """
         genre_match = any(_matches(song.genre, g) for g in user.favorite_genres)
         mood_match = any(_matches(song.mood, m) for m in user.favorite_moods)
 
         energy_similarity = _gaussian_similarity(song.energy, user.target_energy, sigma=0.18)
 
         points = 0.0
-        points += 2.0 if genre_match else 0.0
+        points += 1.0 if genre_match else 0.0
         points += 1.0 if mood_match else 0.0
-        points += 2.0 * energy_similarity
+        points += 4.0 * energy_similarity
 
         acoustic_sim = _gaussian_similarity(song.acousticness, user.acousticness_preference, sigma=0.3)
         instrumental_sim = _gaussian_similarity(song.instrumentalness, user.target_instrumentalness, sigma=0.25)
@@ -80,7 +83,7 @@ class Recommender:
         points += 0.25 * liveness_sim
         points += 0.25 * speechiness_sim
 
-        max_points = 8.0
+        max_points = 7.0
         base_score = points / max_points
         
         # Discovery flexibility: adds a small random boost to enable serendipity
@@ -91,10 +94,10 @@ class Recommender:
 
         reasons: List[str] = []
         if genre_match:
-            reasons.append("genre match (+2.0)")
+            reasons.append("genre match (+1.0)")
         if mood_match:
             reasons.append("mood match (+1.0)")
-        reasons.append(f"energy similarity={energy_similarity:.2f} (+{2.0 * energy_similarity:.2f})")
+        reasons.append(f"energy similarity={energy_similarity:.2f} (+{4.0 * energy_similarity:.2f})")
         if acoustic_sim > 0.7:
             reasons.append(f"acousticness fit (+{0.25 * acoustic_sim:.2f})")
         if instrumental_sim > 0.7:
@@ -132,7 +135,10 @@ def load_songs(csv_path: str) -> List[Dict]:
     return songs
 
 def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, List[str]]]:
-    """Score all songs for a user profile and return the top-k ranked results with reasons."""
+    """Score all songs for a user profile and return the top-k ranked results with reasons.
+    
+    WEIGHT SHIFT EXPERIMENT: Genre halved (+2.0→+1.0), Energy doubled (×2.0→×4.0), max_points=7.0.
+    """
     favorite_genres = [g.strip().lower() for g in str(user_prefs.get("genres", "pop")).split(",") if g.strip()]
     favorite_moods = [m.strip().lower() for m in str(user_prefs.get("moods", "happy")).split(",") if m.strip()]
     target_energy = float(user_prefs.get("energy", 0.5))
@@ -155,9 +161,9 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
         speech_score = _gaussian_similarity(float(song.get("speechiness", 0.0)), target_speech, sigma=0.25)
 
         points = (
-            (2.0 if genre_match else 0.0)
+            (1.0 if genre_match else 0.0)
             + (1.0 if mood_match else 0.0)
-            + (2.0 * energy_similarity)
+            + (4.0 * energy_similarity)
             + (0.25 * acoustic_score)
             + (0.25 * instrumental_score)
             + (0.25 * liveness_score)
@@ -166,16 +172,16 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
 
         reasons: List[str] = []
         if genre_match:
-            reasons.append("genre match (+2.0)")
+            reasons.append("genre match (+1.0)")
         if mood_match:
             reasons.append("mood match (+1.0)")
-        reasons.append(f"energy similarity={energy_similarity:.2f} (+{2.0 * energy_similarity:.2f})")
+        reasons.append(f"energy similarity={energy_similarity:.2f} (+{4.0 * energy_similarity:.2f})")
         if float(song.get("speechiness", 0.0)) > 0.4:
             reasons.append("high speech (rap/spoken)")
         if float(song.get("instrumentalness", 0.0)) > 0.7:
             reasons.append("very instrumental")
 
-        return points / 8.0, reasons
+        return points / 7.0, reasons
 
     scored = [
         (song, *score_song(song))
