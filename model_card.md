@@ -2,73 +2,51 @@
 
 ## 1. Model Name  
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
-
+VibeFinder 1.0
 ---
 
 ## 2. Intended Use  
 
-Describe what your recommender is designed to do and who it is for. 
-
-Prompts:  
-
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+VibeFinder 1.0 generates personalized music recommendations based on four song features: mood, energy, genre, and acousticness. The system assumes that users can express their taste preferences (favorite genre, favorite mood, target energy level, and acoustic preference) directly. It works best for users with consistent musical preferences and comprehensive listening histories.
 
 ---
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+VibeFinder 1.0 uses a content-based approach. It scores each song by comparing its actual musical characteristics to what you tell it you like. Real-world systems like Spotify use a mix of strategies—some learn from what millions of users listen to (collaborative filtering), others analyze audio features directly (content-based), and most blend both. This starter system prioritizes being transparent and interpretable.
 
-Prompts:  
-
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
-
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+For each song, it measures four features: mood (happy, chill, etc.), energy level, genre, and acousticness. Afterwards, it combines these using weighted importance—mood and energy matter most (35% each), while genre and acousticness matter less (20% and 10%). The model uses a bell curve to measure closeness for numeric features like energy. A song with energy 0.75 is better for a user targeting 0.8 than one with energy 0.2. Finally, it ranks all candidate songs by their scores and serves up the top ones, ensuring you always get the best matches first.
 
 ---
 
 ## 4. Data  
 
-Describe the dataset the model uses.  
+The dataset currently contains 18 songs in a small, hand-curated CSV catalog. It started with 10 songs and was expanded by adding 8 new tracks to improve genre and mood coverage. The catalog includes genres such as pop, lofi, rock, ambient, jazz, synthwave, indie pop, electronic, hip-hop, country, folk, metal, reggae, soul, and blues. Moods include happy, chill, intense, relaxed, moody, focused, energetic, nostalgic, melancholic, playful, romantic, and sad.
 
-Prompts:  
+Each row contains core audio-style fields (energy, tempo, valence, danceability, acousticness) plus newer numeric features (instrumentalness, liveness, speechiness). This makes the dataset more useful for distinguishing listening styles like rap/spoken tracks versus instrumental focus tracks.
 
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+Even with the expansion, the dataset is still limited. It does not capture features like language, lyrical themes, cultural context, release year effects, user listening history, skip behavior, time-of-day preferences, or social trends.
+
+```mermaid
+flowchart LR
+	A[Input: User Preferences\n- favorite genres\n- favorite moods\n- target energy\n- acousticness and other feature targets]
+	B[Process: Scoring Loop\nIterate through every song in songs.csv\nAssign points using scoring logic]
+	C[Output: Ranking\nSort by score descending\nReturn Top K recommendations]
+
+	A --> B --> C
+```
 
 ---
 
 ## 5. Strengths  
 
-Where does your system seem to work well  
-
-Prompts:  
-
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+This system works well for users who can describe a clear genre, mood, and energy preference, especially when they want a simple list of songs ranked by how closely they match those choices. It captures obvious patterns like intense rock versus chill lofi, or instrumental versus speech-heavy tracks, because the scoring uses both categorical matches and numeric similarity. The recommendations also feel intuitive for straightforward tastes because the highest-ranked songs usually share the important features the user asked for.
 
 ---
 
 ## 6. Limitations and Bias 
 
-Where the system struggles or behaves unfairly. 
-
-Prompts:  
-
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+This system can favor the song types that appear most often in the small CSV and it only considers the features it was given, so it may miss things like lyrics, culture, release year, or listening context. Because genre is weighted more than mood, genre matches can sometimes outweigh emotional fit.
 
 ---
 

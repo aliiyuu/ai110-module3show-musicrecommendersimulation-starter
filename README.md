@@ -31,6 +31,10 @@ You can include a simple diagram or bullet list if helpful.
 
 ---
 
+Each `Song` will prioritize storing features that capture the 'vibe' of songs that a user might like instead of focusing excessively on recommending the same artist or genre. This allows users to receive dynamic recommendations that still align with their tastes. 
+
+As advised by GitHub Copilot, a user profile should store "a mix of hard preferences, soft targets, and behavior history so it can match vibe while still allowing discovery." For example, `favorite_moods` (a list of moods with optional weights) and `preferred_energy`
+
 ## Getting Started
 
 ### Setup
@@ -53,6 +57,10 @@ pip install -r requirements.txt
 ```bash
 python -m src.main
 ```
+
+### Sample Output
+
+![Recommendation Output](output.png)
 
 ### Running Tests
 
